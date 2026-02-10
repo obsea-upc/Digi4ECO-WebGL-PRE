@@ -34,7 +34,7 @@
             height: 100% !important;    /* Fuerza visible 100% */
             -webkit-user-select: none;
             user-select: none;
-            image-rendering: pixelated; /* Opcional: menos blur en upscale (prueba con/ sin) */
+            /*image-rendering: pixelated;*/
         }
     </style>
 </head>
@@ -62,6 +62,7 @@
             };
 
             // Nuevos valores: límites de resolución interna (cámbialos a tu gusto)
+			const GAME_ASPECT = 1024 / 768;
             const MAX_RENDER_WIDTH  = 1024;
             const MAX_RENDER_HEIGHT = 768;
 
@@ -74,31 +75,35 @@
                 container.style.top    = "0px";
                 container.style.left   = "0px";
 
-                // Tamaño visible deseado = full ventana
-                var displayWidth  = window.innerWidth;
-                var displayHeight = window.innerHeight;
+				var windowW = window.innerWidth;
+				var windowH = window.innerHeight;
 
-                // Resolución de RENDER (buffer WebGL) → clamp sin tocar aspect
-                var renderWidth  = Math.min(displayWidth,  MAX_RENDER_WIDTH);
-                var renderHeight = Math.min(displayHeight, MAX_RENDER_HEIGHT);
+				// 1. Caso: ventana pequeña → render full (sin clamp), Unity escala bien
+				var renderW = windowW;
+				var renderH = windowH;
 
-                // Aplicamos al canvas (esto controla cuántos píxeles renderiza Unity)
-                if (canvas.width  !== renderWidth  || canvas.height !== renderHeight) {
-                    canvas.width  = renderWidth;
-                    canvas.height = renderHeight;
+				// 2. Caso: ventana grande → clamp preservando aspect ratio del juego
+				if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
+					// Calculamos el tamaño clamped que quepa dentro del max, manteniendo aspect del juego
+					var scaleW = MAX_RENDER_WIDTH / windowW;
+					var scaleH = MAX_RENDER_HEIGHT / windowH;
+					var scale  = Math.min(scaleW, scaleH);  // El factor limitante
 
-                    // Opcional: fuerza a Unity/Emscripten a reconocer el cambio (en algunos casos ayuda)
-                    if (window.Module && Module.canvas) {
-                        // A veces necesario en builds recientes
-                        // Module.canvas.width = renderWidth;
-                        // Module.canvas.height = renderHeight;
-                    }
-                }
+					renderW = Math.floor(windowW * scale);
+					renderH = Math.floor(windowH * scale);
 
-                // El CSS ya fuerza 100%, así que el navegador upscalea automáticamente
-                // No centramos ni ajustamos nada más → full stretch
+					// Aseguramos no superar (por redondeo)
+					renderW = Math.min(renderW, MAX_RENDER_WIDTH);
+					renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
+				}
+
+				// Aplicamos resolución interna (render buffer)
+				if (canvas.width !== renderW || canvas.height !== renderH) {
+					canvas.width  = renderW;
+					canvas.height = renderH;
+				}
             }
-
+			
             createUnityInstance(canvas, config).then(function (instance) {
                 // Actualizamos referencia si Unity la cambia
                 canvas = instance.Module.canvas || canvas;
