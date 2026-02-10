@@ -30,10 +30,11 @@
         #gameContainer canvas {
             position: absolute;
             inset: 0;
-            width: 100%;
-            height: 100%;
+            width: 100% !important;     /* Fuerza visible 100% */
+            height: 100% !important;    /* Fuerza visible 100% */
             -webkit-user-select: none;
             user-select: none;
+            image-rendering: pixelated; /* Opcional: menos blur en upscale (prueba con/ sin) */
         }
     </style>
 </head>
@@ -45,6 +46,7 @@
         <script src="Build/Digi4ECO-WebGL-PRE.loader.js"></script>
         <script>
             var canvas = document.querySelector("#unity-canvas");
+
             var config = {
                 dataUrl: "Build/Digi4ECO-WebGL-PRE.data",
                 frameworkUrl: "Build/Digi4ECO-WebGL-PRE.framework.js",
@@ -52,74 +54,59 @@
                 streamingAssetsUrl: "StreamingAssets",
                 companyName: "UPC",
                 productName: "Digi4ECO",
-                productVersion: "1.0.3",
+                productVersion: "1.0.4",
                 autoSyncPersistentDataPath: true,
+
+                // ¡Importante! Desactiva la sincronización automática
+                matchWebGLToCanvasSize: false
             };
 
-            var scaleToFit;
-            try {
-                scaleToFit = !!JSON.parse("true");   // true/false según Player Settings
-            } catch (e) {
-                scaleToFit = true;   // fallback mínimo si Unity no lo pasa (raro)
-            }
-
-            var maintainAspectRatio;
-            try {
-                maintainAspectRatio = !!JSON.parse("false");
-            } catch (e) {
-                maintainAspectRatio = true;   // por defecto mantiene ratio
-            }
+            // Nuevos valores: límites de resolución interna (cámbialos a tu gusto)
+            const MAX_RENDER_WIDTH  = 1024;
+            const MAX_RENDER_HEIGHT = 768;
 
             function onResize() {
                 var container = canvas.parentElement;
-                var targetW, targetH;
 
-                if (scaleToFit) {
-                    var windowW = window.innerWidth;
-                    var windowH = window.innerHeight;
+                // Siempre full window para el contenedor y CSS del canvas
+                container.style.width  = "100%";
+                container.style.height = "100%";
+                container.style.top    = "0px";
+                container.style.left   = "0px";
 
-                    if (maintainAspectRatio) {
-                        // Mantiene ratio
-                        var gameRatio = 1080 / 1920;
-                        targetW = windowW;
-                        targetH = Math.floor(targetW * gameRatio);
+                // Tamaño visible deseado = full ventana
+                var displayWidth  = window.innerWidth;
+                var displayHeight = window.innerHeight;
 
-                        if (targetH > windowH) {
-                            targetH = windowH;
-                            targetW = Math.floor(targetH / gameRatio);
-                        }
-                    } else {
-                        // Llena 100% sin importar ratio (estira)
-                        targetW = windowW;
-                        targetH = windowH;
+                // Resolución de RENDER (buffer WebGL) → clamp sin tocar aspect
+                var renderWidth  = Math.min(displayWidth,  MAX_RENDER_WIDTH);
+                var renderHeight = Math.min(displayHeight, MAX_RENDER_HEIGHT);
+
+                // Aplicamos al canvas (esto controla cuántos píxeles renderiza Unity)
+                if (canvas.width  !== renderWidth  || canvas.height !== renderHeight) {
+                    canvas.width  = renderWidth;
+                    canvas.height = renderHeight;
+
+                    // Opcional: fuerza a Unity/Emscripten a reconocer el cambio (en algunos casos ayuda)
+                    if (window.Module && Module.canvas) {
+                        // A veces necesario en builds recientes
+                        // Module.canvas.width = renderWidth;
+                        // Module.canvas.height = renderHeight;
                     }
-
-                    container.style.width = targetW + "px";
-                    container.style.height = targetH + "px";
-                    container.style.top = Math.floor((window.innerHeight - targetH) / 2) + "px";
-                    container.style.left = Math.floor((window.innerWidth - targetW) / 2) + "px";
-                } else {
-                    // No scale: tamaño fijo, centrado
-                    targetW = 1920;
-                    targetH = 1080;
-                    container.style.width = targetW + "px";
-                    container.style.height = targetH + "px";
-                    container.style.top = Math.floor((window.innerHeight - targetH) / 2) + "px";
-                    container.style.left = Math.floor((window.innerWidth - targetW) / 2) + "px";
                 }
 
-                canvas.style.width = targetW + "px";
-                canvas.style.height = targetH + "px";
-                window.focus();
+                // El CSS ya fuerza 100%, así que el navegador upscalea automáticamente
+                // No centramos ni ajustamos nada más → full stretch
             }
 
             createUnityInstance(canvas, config).then(function (instance) {
+                // Actualizamos referencia si Unity la cambia
                 canvas = instance.Module.canvas || canvas;
-                onResize();
+                onResize();           // Inicial
             }).catch(err => console.error("Unity load error:", err));
 
             window.addEventListener('resize', onResize);
-            onResize();
+            onResize();  // Llamada inicial
         </script>
     </div>
 </body>
