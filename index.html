@@ -104,12 +104,12 @@
 				var windowW = window.innerWidth;
 				var windowH = window.innerHeight;
 
-				var renderW = Math.min(windowW, MAX_RENDER_WIDTH);
-				var renderH = Math.min(windowH, MAX_RENDER_HEIGHT);
-/*
+//				var renderW = Math.min(windowW, MAX_RENDER_WIDTH);
+//				var renderH = Math.min(windowH, MAX_RENDER_HEIGHT);
+
 				// 1. Caso: ventana pequeña → render full (sin clamp), Unity escala bien
-				renderW = windowW;
-				renderH = windowH;
+				var renderW = windowW;
+				var renderH = windowH;
 
 				// 2. Caso: ventana grande → clamp preservando aspect ratio del juego
 				if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
@@ -125,7 +125,7 @@
 					renderW = Math.min(renderW, MAX_RENDER_WIDTH);
 					renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
 				}
-*/
+
 				// Aplicamos resolución interna (render buffer)
 				if (canvas.width !== renderW || canvas.height !== renderH) {
 					canvas.width  = renderW;
