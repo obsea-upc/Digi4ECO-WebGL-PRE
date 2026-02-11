@@ -54,15 +54,13 @@
                 streamingAssetsUrl: "StreamingAssets",
                 companyName: "UPC",
                 productName: "Digi4ECO",
-                productVersion: "1.0.6",
+                productVersion: "1.0.7",
                 autoSyncPersistentDataPath: true,
 
-                // ¡Importante! Desactiva la sincronización automática
+                // Disable auto sync
                 matchWebGLToCanvasSize: false
             };
 
-            // Nuevos valores: límites de resolución interna (cámbialos a tu gusto)
-			let GAME_ASPECT = 1920 / 1080;
             let MAX_RENDER_WIDTH  = 1920;
             let MAX_RENDER_HEIGHT = 1080;
 			let FULL_SCREEN = false;
@@ -70,7 +68,6 @@
 			window.SetResolution = function(width, height, fullscreen) {
 
 				if (width > 0 && height > 0) {
-					GAME_ASPECT = width / height;
 					MAX_RENDER_WIDTH  = width;
 					MAX_RENDER_HEIGHT = height;
 					FULL_SCREEN = (fullscreen !== undefined && fullscreen);
@@ -79,23 +76,21 @@
 				if (fullscreen !== undefined) {
 					if (fullscreen) {
 						if (canvas.requestFullscreen) {
-							canvas.requestFullscreen().catch(e => console.warn("Fullscreen denegado:", e));
+							canvas.requestFullscreen().catch(e => console.warn("Set Fullscreen On error:", e));
 						}
 					} else {
 						if (document.exitFullscreen) {
-							document.exitFullscreen().catch(e => console.warn("Exit fullscreen error:", e));
+							document.exitFullscreen().catch(e => console.warn("Set Fullscreen Off error:", e));
 						}
 					}
 				}
 
-				// Recalcula inmediatamente
 				onResize();
 			};
-
+			
             function onResize() {
                 var container = canvas.parentElement;
 
-                // Siempre full window para el contenedor y CSS del canvas
                 container.style.width  = "100%";
                 container.style.height = "100%";
                 container.style.top    = "0px";
@@ -104,45 +99,47 @@
 				var windowW = window.innerWidth;
 				var windowH = window.innerHeight;
 
-//				var renderW = Math.min(windowW, MAX_RENDER_WIDTH);
-//				var renderH = Math.min(windowH, MAX_RENDER_HEIGHT);
-
-				// 1. Caso: ventana pequeña → render full (sin clamp), Unity escala bien
 				var renderW = windowW;
 				var renderH = windowH;
 				
-				if (FULL_SCREEN)
-				{
+				if (FULL_SCREEN) {
 					renderW = Math.min(windowW, MAX_RENDER_WIDTH);
 					renderH = Math.min(windowH, MAX_RENDER_HEIGHT);
 				}
 				else
 				{
-					// 2. Caso: ventana grande → clamp preservando aspect ratio del juego
 					if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
-						// Calculamos el tamaño clamped que quepa dentro del max, manteniendo aspect del juego
 						var scaleW = MAX_RENDER_WIDTH / windowW;
 						var scaleH = MAX_RENDER_HEIGHT / windowH;
-						var scale  = Math.min(scaleW, scaleH);  // El factor limitante
+						var scale  = Math.min(scaleW, scaleH);
 
 						renderW = Math.floor(windowW * scale);
 						renderH = Math.floor(windowH * scale);
 
-						// Aseguramos no superar (por redondeo)
+						// Limits
 						renderW = Math.min(renderW, MAX_RENDER_WIDTH);
 						renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
 					}
 				}
 				
-				// Aplicamos resolución interna (render buffer)
+				// Apply internal resolution (render buffer)
 				if (canvas.width !== renderW || canvas.height !== renderH) {
 					canvas.width  = renderW;
 					canvas.height = renderH;
 				}
             }
+
+			document.addEventListener('fullscreenchange', function() {
+				var isFullscreen = !!document.fullscreenElement;
+
+				if (isFullscreen !== FULL_SCREEN) {
+					FULL_SCREEN = isNowFullscreen;
+					
+					onResize();
+				}
+			});			
 			
             createUnityInstance(canvas, config).then(function (instance) {
-                // Actualizamos referencia si Unity la cambia
                 canvas = instance.Module.canvas || canvas;
                 onResize();           // Inicial
             }).catch(err => console.error("Unity load error:", err));
