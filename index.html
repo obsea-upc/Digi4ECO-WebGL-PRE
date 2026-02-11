@@ -65,17 +65,17 @@
 			let GAME_ASPECT = 1920 / 1080;
             let MAX_RENDER_WIDTH  = 1920;
             let MAX_RENDER_HEIGHT = 1080;
+			let FULL_SCREEN = false;
 
 			window.SetResolution = function(width, height, fullscreen) {
-				// 1. Manejo de resolución
+
 				if (width > 0 && height > 0) {
+					GAME_ASPECT = width / height;
 					MAX_RENDER_WIDTH  = width;
 					MAX_RENDER_HEIGHT = height;
-					// Opcional: actualiza aspect base si quieres que el clamp use el nuevo aspect deseado
-					//GAME_ASPECT = width / height;
+					FULL_SCREEN = (fullscreen !== undefined && fullscreen);
 				}
 
-				// 2. Manejo de fullscreen (solo funciona si se llama desde input usuario)
 				if (fullscreen !== undefined) {
 					if (fullscreen) {
 						if (canvas.requestFullscreen) {
@@ -110,22 +110,30 @@
 				// 1. Caso: ventana pequeña → render full (sin clamp), Unity escala bien
 				var renderW = windowW;
 				var renderH = windowH;
-
-				// 2. Caso: ventana grande → clamp preservando aspect ratio del juego
-				if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
-					// Calculamos el tamaño clamped que quepa dentro del max, manteniendo aspect del juego
-					var scaleW = MAX_RENDER_WIDTH / windowW;
-					var scaleH = MAX_RENDER_HEIGHT / windowH;
-					var scale  = Math.min(scaleW, scaleH);  // El factor limitante
-
-					renderW = Math.floor(windowW * scale);
-					renderH = Math.floor(windowH * scale);
-
-					// Aseguramos no superar (por redondeo)
-					renderW = Math.min(renderW, MAX_RENDER_WIDTH);
-					renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
+				
+				if (FULL_SCREEN)
+				{
+					renderW = Math.min(windowW, MAX_RENDER_WIDTH);
+					renderH = Math.min(windowH, MAX_RENDER_HEIGHT);
 				}
+				else
+				{
+					// 2. Caso: ventana grande → clamp preservando aspect ratio del juego
+					if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
+						// Calculamos el tamaño clamped que quepa dentro del max, manteniendo aspect del juego
+						var scaleW = MAX_RENDER_WIDTH / windowW;
+						var scaleH = MAX_RENDER_HEIGHT / windowH;
+						var scale  = Math.min(scaleW, scaleH);  // El factor limitante
 
+						renderW = Math.floor(windowW * scale);
+						renderH = Math.floor(windowH * scale);
+
+						// Aseguramos no superar (por redondeo)
+						renderW = Math.min(renderW, MAX_RENDER_WIDTH);
+						renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
+					}
+				}
+				
 				// Aplicamos resolución interna (render buffer)
 				if (canvas.width !== renderW || canvas.height !== renderH) {
 					canvas.width  = renderW;
