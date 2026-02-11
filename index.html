@@ -54,7 +54,7 @@
                 streamingAssetsUrl: "StreamingAssets",
                 companyName: "UPC",
                 productName: "Digi4ECO",
-                productVersion: "1.0.4",
+                productVersion: "1.0.5",
                 autoSyncPersistentDataPath: true,
 
                 // ¡Importante! Desactiva la sincronización automática
@@ -62,9 +62,39 @@
             };
 
             // Nuevos valores: límites de resolución interna (cámbialos a tu gusto)
-			const GAME_ASPECT = 1920 / 1080;
-            const MAX_RENDER_WIDTH  = 1920;
-            const MAX_RENDER_HEIGHT = 1080;
+			let GAME_ASPECT = 1920 / 1080;
+            let MAX_RENDER_WIDTH  = 1920;
+            let MAX_RENDER_HEIGHT = 1080;
+
+			let forcedRenderWidth = -1;
+			let forcedRenderHeight = -1;
+
+			window.SetResolution = function(width, height, fullscreen) {
+				// 1. Manejo de resolución
+				if (width > 0 && height > 0) {
+					forcedRenderWidth = width;
+					forcedRenderHeight = height;
+				} else {
+					forcedRenderWidth = -1;
+					forcedRenderHeight = -1;
+				}
+
+				// 2. Manejo de fullscreen (solo funciona si se llama desde input usuario)
+				if (fullscreen !== undefined) {
+					if (fullscreen) {
+						if (canvas.requestFullscreen) {
+							canvas.requestFullscreen().catch(e => console.warn("Fullscreen denegado:", e));
+						}
+					} else {
+						if (document.exitFullscreen) {
+							document.exitFullscreen().catch(e => console.warn("Exit fullscreen error:", e));
+						}
+					}
+				}
+
+				// Recalcula inmediatamente
+				onResize();
+			};
 
             function onResize() {
                 var container = canvas.parentElement;
@@ -78,23 +108,32 @@
 				var windowW = window.innerWidth;
 				var windowH = window.innerHeight;
 
-				// 1. Caso: ventana pequeña → render full (sin clamp), Unity escala bien
-				var renderW = windowW;
-				var renderH = windowH;
+				var renderW, renderH;
 
-				// 2. Caso: ventana grande → clamp preservando aspect ratio del juego
-				if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
-					// Calculamos el tamaño clamped que quepa dentro del max, manteniendo aspect del juego
-					var scaleW = MAX_RENDER_WIDTH / windowW;
-					var scaleH = MAX_RENDER_HEIGHT / windowH;
-					var scale  = Math.min(scaleW, scaleH);  // El factor limitante
+				if (forcedRenderWidth > 0 && forcedRenderHeight > 0) {
+					// Modo forzado: usa exactamente lo pedido (puede distorsionar si no coincide aspect)
+					renderW = forcedRenderWidth;
+					renderH = forcedRenderHeight;
+				}
+				else {
+					// 1. Caso: ventana pequeña → render full (sin clamp), Unity escala bien
+					renderW = windowW;
+					renderH = windowH;
 
-					renderW = Math.floor(windowW * scale);
-					renderH = Math.floor(windowH * scale);
+					// 2. Caso: ventana grande → clamp preservando aspect ratio del juego
+					if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
+						// Calculamos el tamaño clamped que quepa dentro del max, manteniendo aspect del juego
+						var scaleW = MAX_RENDER_WIDTH / windowW;
+						var scaleH = MAX_RENDER_HEIGHT / windowH;
+						var scale  = Math.min(scaleW, scaleH);  // El factor limitante
 
-					// Aseguramos no superar (por redondeo)
-					renderW = Math.min(renderW, MAX_RENDER_WIDTH);
-					renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
+						renderW = Math.floor(windowW * scale);
+						renderH = Math.floor(windowH * scale);
+
+						// Aseguramos no superar (por redondeo)
+						renderW = Math.min(renderW, MAX_RENDER_WIDTH);
+						renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
+					}
 				}
 
 				// Aplicamos resolución interna (render buffer)
