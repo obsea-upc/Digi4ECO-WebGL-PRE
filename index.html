@@ -31,8 +31,8 @@
         #gameContainer canvas {
             position: absolute;
             inset: 0;
-            width: 100% !important;     /* Fuerza visible 100% */
-            height: 100% !important;    /* Fuerza visible 100% */
+            width: 100% !important;
+            height: 100% !important;
             -webkit-user-select: none;
             user-select: none;
             /*image-rendering: pixelated;*/
@@ -55,7 +55,7 @@
                 streamingAssetsUrl: "StreamingAssets",
                 companyName: "UPC",
                 productName: "Digi4ECO",
-                productVersion: "1.0.16",
+                productVersion: "1.0.17",
                 autoSyncPersistentDataPath: true,
 
                 // Disable auto sync
@@ -91,6 +91,10 @@
 			};
 			
             function onResize() {
+			
+				if (IS_MOBILE)
+					return;
+
                 var container = canvas.parentElement;
 
                 container.style.width  = "100%";
@@ -103,10 +107,7 @@
 
 				var renderW = windowW;
 				var renderH = windowH;
-				
-				if (IS_MOBILE)
-					return;
-					
+								
 				if (FULL_SCREEN) {
 					renderW = Math.min(windowW, MAX_RENDER_WIDTH);
 					renderH = Math.min(windowH, MAX_RENDER_HEIGHT);
