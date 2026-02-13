@@ -55,7 +55,7 @@
                 streamingAssetsUrl: "StreamingAssets",
                 companyName: "UPC",
                 productName: "Digi4ECO",
-                productVersion: "1.0.17",
+                productVersion: "1.0.18",
                 autoSyncPersistentDataPath: true,
 
                 // Disable auto sync
@@ -63,6 +63,7 @@
             };
 
 			const IS_MOBILE = /Mobi|Android|iPad|iPhone|BlackBerry|webOS|Opera Mini|IEMobile/i.test(navigator.userAgent);
+			const DEVICE_PIXEL_RATIO = window.devicePixelRatio || 1;
             let MAX_RENDER_WIDTH  = 1920;
             let MAX_RENDER_HEIGHT = 1080;
 			let FULL_SCREEN = false;
@@ -92,9 +93,6 @@
 			
             function onResize() {
 			
-				if (IS_MOBILE)
-					return;
-
                 var container = canvas.parentElement;
 
                 container.style.width  = "100%";
@@ -108,23 +106,30 @@
 				var renderW = windowW;
 				var renderH = windowH;
 								
-				if (FULL_SCREEN) {
-					renderW = Math.min(windowW, MAX_RENDER_WIDTH);
-					renderH = Math.min(windowH, MAX_RENDER_HEIGHT);
+				if (IS_MOBILE) {
+					renderW = Math.floor(windowW * DEVICE_PIXEL_RATIO);
+					renderH = Math.floor(windowH * DEVICE_PIXEL_RATIO);				
 				}
 				else
 				{
-					if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
-						var scaleW = MAX_RENDER_WIDTH / windowW;
-						var scaleH = MAX_RENDER_HEIGHT / windowH;
-						var scale  = Math.min(scaleW, scaleH);
+					if (FULL_SCREEN) {
+						renderW = Math.min(windowW, MAX_RENDER_WIDTH);
+						renderH = Math.min(windowH, MAX_RENDER_HEIGHT);
+					}
+					else
+					{
+						if (windowW > MAX_RENDER_WIDTH || windowH > MAX_RENDER_HEIGHT) {
+							var scaleW = MAX_RENDER_WIDTH / windowW;
+							var scaleH = MAX_RENDER_HEIGHT / windowH;
+							var scale  = Math.min(scaleW, scaleH);
 
-						renderW = Math.floor(windowW * scale);
-						renderH = Math.floor(windowH * scale);
+							renderW = Math.floor(windowW * scale);
+							renderH = Math.floor(windowH * scale);
 
-						// Limits
-						renderW = Math.min(renderW, MAX_RENDER_WIDTH);
-						renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
+							// Limits
+							renderW = Math.min(renderW, MAX_RENDER_WIDTH);
+							renderH = Math.min(renderH, MAX_RENDER_HEIGHT);
+						}
 					}
 				}
 				
