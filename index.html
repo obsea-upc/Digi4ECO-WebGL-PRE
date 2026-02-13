@@ -55,7 +55,7 @@
                 streamingAssetsUrl: "StreamingAssets",
                 companyName: "UPC",
                 productName: "Digi4ECO",
-                productVersion: "1.0.18",
+                productVersion: "1.0.19",
                 autoSyncPersistentDataPath: true,
 
                 // Disable auto sync
@@ -93,6 +93,9 @@
 			
             function onResize() {
 			
+				if (IS_MOBILE)		// forced
+					return;
+				
                 var container = canvas.parentElement;
 
                 container.style.width  = "100%";
@@ -108,7 +111,7 @@
 								
 				if (IS_MOBILE) {
 					renderW = Math.floor(windowW * DEVICE_PIXEL_RATIO);
-					renderH = Math.floor(windowH * DEVICE_PIXEL_RATIO);				
+					renderH = Math.floor(windowH * DEVICE_PIXEL_RATIO);
 				}
 				else
 				{
